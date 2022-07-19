@@ -130,6 +130,7 @@ dmypy.json
 
 # Telethone sessions
 *.session
+*.session-journal
 
 # Results
 output/

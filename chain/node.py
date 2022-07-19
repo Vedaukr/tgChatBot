@@ -1,6 +1,6 @@
+from __future__ import annotations
 from abc import abstractclassmethod
 from numpy.random import choice
-from __future__ import annotations
 from typing import Any, List, Tuple
 
 class NodeData:
@@ -11,10 +11,14 @@ class NodeData:
 
 class ChainNode:
 
-    def __init__(self, childProbs: List[Tuple[ChainNode, float]]) -> None:
+    def __init__(self, childProbs: List[Tuple[ChainNode, float]]=None) -> None:
+        if childProbs:
+            self.init_props(childProbs)
+
+    def init_props(self, childProbs: List[Tuple[ChainNode, float]]) -> None:
         self.childs = [p[0] for p in childProbs]
         self.probs = [p[1] for p in childProbs]
-
+    
     def apply_transition(self) -> ChainNode:
         return choice(self.childs, p=self.probs)
     
@@ -33,7 +37,7 @@ class ValueNode(ChainNode):
         
 class TransitionNode(ChainNode):
 
-    def __init__(self, childProbs) -> None:
+    def __init__(self, childProbs=None) -> None:
         super().__init__(childProbs)
 
     def get_value(self) -> NodeData:

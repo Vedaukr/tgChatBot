@@ -6,13 +6,13 @@ class WordTree:
     
     # constants
     max_word_length = 13
-    top_chats = 20
+    top_chats = 5
     current_user = 'me'
     
     def __init__(self, tree=None) -> None:
         self.tree = tree if tree else {}
 
-    async def init(self, client: TelegramClient, chats=None, depth=3, remove_duplicates=True):
+    async def init(self, client: TelegramClient, chats=None, depth=3, remove_duplicates=True, msg_limit=100):
         
         if not chats:
             chats = await self._get_chats(client)
@@ -22,8 +22,7 @@ class WordTree:
             retrieved_messages = set()
             print("Retrieving messages from {} | {}".format(chatId, datetime.now()))
             
-            async for message in client.iter_messages(chatId, from_user=self.current_user):
-                
+            async for message in client.iter_messages(chatId, from_user=self.current_user, limit=msg_limit):
                 if remove_duplicates:
                     if message.message in retrieved_messages:
                         continue

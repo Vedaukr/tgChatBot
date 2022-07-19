@@ -1,5 +1,5 @@
 from typing import Any
-from node import ChainNode
+from chain.node import ChainNode
 
 class Chain:
 
