@@ -7,7 +7,7 @@ import settings
 client = TelegramClient(settings.session_name, settings.api_id, settings.api_hash).start()
 
 DEPTH = 5
-MSG_LIMIT = 5000
+MSG_LIMIT = 50000
 
 async def main():
     await client.connect()
