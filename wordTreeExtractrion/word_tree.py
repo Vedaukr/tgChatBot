@@ -9,22 +9,20 @@ class WordTree:
     top_chats = 20
     current_user = 'me'
     
-    def __init__(self, client: TelegramClient) -> None:
-        self.client = client
-        self.tree = {}
+    def __init__(self, tree=None) -> None:
+        self.tree = tree if tree else {}
 
-    async def init(self, chats=None, depth=3, remove_duplicates=True):
+    async def init(self, client: TelegramClient, chats=None, depth=3, remove_duplicates=True):
         
         if not chats:
-            chats = await self._get_chats()
-        
+            chats = await self._get_chats(client)
         
         for chatId in chats:
 
             retrieved_messages = set()
             print("Retrieving messages from {} | {}".format(chatId, datetime.now()))
             
-            async for message in self.client.iter_messages(chatId, from_user=self.current_user):
+            async for message in client.iter_messages(chatId, from_user=self.current_user):
                 
                 if remove_duplicates:
                     if message.message in retrieved_messages:
@@ -46,7 +44,8 @@ class WordTree:
         return self
 
     def filter(self, word_list):
-        self._filter_internal(word_list, self.tree)
+        normalized_list = list(map(str.lower, word_list))
+        self.tree = self._filter_internal(normalized_list, self.tree)
         return self
 
     def sort(self):
@@ -63,6 +62,11 @@ class WordTree:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(self.tree, f, ensure_ascii=False, indent=2)
     
+    @staticmethod
+    def create_from_dump(sourceFile):
+        with open(sourceFile, 'r', encoding='utf-8') as f:
+            tree = json.load(f)
+            return WordTree(tree)
     
     # PRIVATE
     def _sort_internal(self, curr_tree):
@@ -79,27 +83,19 @@ class WordTree:
     def _filter_internal(self, word_list, curr_tree):
         
         if not curr_tree:
-            return
-        
-        for word in word_list:
-            if word in curr_tree:
-                del curr_tree[word]
-        
-        keys_to_delete = []
-        for key, item in curr_tree.items():
-            if len(key) > self.max_word_length:
-                keys_to_delete.append(key)
-            
-            if 'http' in key:
-                keys_to_delete.append(key)
+            return curr_tree
 
-            if "next" in curr_tree[key]:
-                self._filter_internal(word_list, curr_tree[key]["next"])
+        filtered = dict(filter(lambda x: self._filter_key(x[0], word_list), curr_tree.items()))
         
-        for key in keys_to_delete:
-            if key in curr_tree:
-                del curr_tree[key]
+        for value in filtered.values():
+            if "next" in value:
+                value["next"] = self._filter_internal(word_list, value["next"])
+        
+        return filtered
 
+    def _filter_key(self, key, word_list):
+        return not (key in word_list or 'http' in key or len(key) > self.max_word_length)
+    
     def _normalize_word(self, word):
         return ''.join(filter(str.isalpha, word)).lower()
 
@@ -126,5 +122,5 @@ class WordTree:
         return tree[word]
             
 
-    async def _get_chats(self):
-        return [dialog.id async for dialog in self.client.iter_dialogs(limit=self.top_chats)]
+    async def _get_chats(self, client: TelegramClient):
+        return [dialog.id async for dialog in client.iter_dialogs(limit=self.top_chats)]
