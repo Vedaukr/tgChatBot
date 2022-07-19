@@ -1,6 +1,6 @@
 from xmlrpc.client import Boolean
 from telethon import TelegramClient
-from word_tree import WordTree
+from word_tree.word_tree import WordTree
 import settings
 
 client = TelegramClient(settings.session_name, settings.api_id, settings.api_hash)
